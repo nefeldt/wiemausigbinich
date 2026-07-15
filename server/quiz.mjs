@@ -17,6 +17,10 @@ The quiz places people in a triangle between three vibes:
 Questions are in English, casual and funny, about everyday situations (parties, dating, vacation, conflict)
 mixed with light office-life moments (standups, Slack messages, the office kitchen, team events).
 A slight corporate flavor is fine, but never stiff HR speak — it stays playful and a little unhinged.
+
+KEEP IT SHORT: every question is ONE punchy sentence of at most 12 words — no scenario
+build-up, no sub-clauses. Every answer is a short phrase of at most 7 words.
+
 Each question has exactly 4 answer options. Each answer carries weights m, a, f (integers 0-3) for how strongly
 it signals each vibe. The answers of a question must differ clearly in their weights.
 Reply with raw JSON only — no markdown, no explanations.`;
@@ -36,7 +40,7 @@ async function requestChatCompletion(model, messages) {
         model,
         messages,
         temperature: 0.9,
-        max_tokens: 4096,
+        max_tokens: 2500,
       }),
       signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
     });
@@ -89,6 +93,43 @@ async function callLlm(messages) {
   }
 }
 
+// Models sometimes emit raw newlines/tabs inside JSON string literals,
+// which JSON.parse rejects ("Bad control character in string literal")
+function escapeControlCharsInStrings(text) {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+  for (const ch of text) {
+    if (!inString) {
+      if (ch === '"') inString = true;
+      out += ch;
+      continue;
+    }
+    if (escaped) {
+      out += ch;
+      escaped = false;
+      continue;
+    }
+    if (ch === "\\") {
+      out += ch;
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = false;
+      out += ch;
+      continue;
+    }
+    const code = ch.codePointAt(0);
+    if (code < 0x20) {
+      out += code === 10 ? "\\n" : code === 9 ? "\\t" : " ";
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
 // Models occasionally wrap JSON in code fences or prose despite instructions
 function extractJson(text) {
   const start = text.indexOf("{");
@@ -98,7 +139,20 @@ function extractJson(text) {
     err.status = 502;
     throw err;
   }
-  return JSON.parse(text.slice(start, end + 1));
+  const slice = text.slice(start, end + 1);
+  try {
+    return JSON.parse(slice);
+  } catch {
+    try {
+      return JSON.parse(escapeControlCharsInStrings(slice));
+    } catch (cause) {
+      console.error("LLM returned unparseable JSON:", slice.slice(0, 500));
+      const err = new Error("The AI returned a malformed answer. Please try again.");
+      err.status = 502;
+      err.cause = cause;
+      throw err;
+    }
+  }
 }
 
 function clampWeight(value) {
@@ -107,25 +161,32 @@ function clampWeight(value) {
   return Math.max(0, Math.min(3, Math.round(num)));
 }
 
+// Collapse whitespace/newlines and hard-cap the length as a safety net
+function clipText(text, max) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  return clean.length > max ? `${clean.slice(0, max - 1).trimEnd()}…` : clean;
+}
+
 function sanitizeQuestion(raw) {
   if (!raw || typeof raw.text !== "string" || !Array.isArray(raw.answers)) return null;
   const answers = raw.answers
     .filter((ans) => ans && typeof ans.text === "string" && ans.text.trim())
     .slice(0, 4)
     .map((ans) => ({
-      text: ans.text.trim(),
+      text: clipText(ans.text, 90),
       m: clampWeight(ans.m),
       a: clampWeight(ans.a),
       f: clampWeight(ans.f),
     }));
   if (answers.length < 3) return null;
   if (answers.every((ans) => ans.m + ans.a + ans.f === 0)) return null;
-  return { text: raw.text.trim(), answers };
+  return { text: clipText(raw.text, 160), answers };
 }
 
 function formatHistory(history) {
+  const clip = (text) => text.replace(/\s+/g, " ").trim().slice(0, 160);
   return history
-    .map((entry, i) => `${i + 1}. Question: ${entry.question}\n   Answer: ${entry.answer}`)
+    .map((entry, i) => `${i + 1}. Question: ${clip(entry.question)}\n   Answer: ${clip(entry.answer)}`)
     .join("\n");
 }
 
@@ -179,8 +240,9 @@ quizRouter.post("/next", async (req, res, next) => {
         content:
           `The player has answered like this so far:\n${formatHistory(cleanHistory)}\n\n` +
           `Generate exactly ONE new follow-up question that digs into where the picture ` +
-          `between mausig, atzig, and fotzig is still the most unclear. Feel free to wink ` +
-          `at earlier answers. Do not repeat a question. ` +
+          `between mausig, atzig, and fotzig is still the most unclear. A subtle wink at an ` +
+          `earlier answer is fine. Do not repeat a question. The length rules are strict: ` +
+          `ONE sentence of at most 12 words, answers at most 7 words, no line breaks. ` +
           `Reply with JSON in this shape: {"question": ${QUESTION_JSON_SHAPE}}`,
       },
     ]);
