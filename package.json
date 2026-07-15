@@ -1,0 +1,28 @@
+{
+  "name": "afm-dreieck",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n server,web \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "node server/index.mjs",
+    "dev:web": "vite",
+    "build": "tsc --noEmit && vite build",
+    "start": "node server/index.mjs"
+  },
+  "dependencies": {
+    "@mittwald/flow-react-components": "^0.2.0-alpha.906",
+    "@mittwald/react-use-promise": "^4.2.2",
+    "express": "^5.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.1.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.0.0"
+  }
+}
