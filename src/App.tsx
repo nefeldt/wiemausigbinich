@@ -447,6 +447,7 @@ export function App() {
       <Modal controller={deleteController} isDismissable showCloseButton>
         <Heading>Delete {pendingDelete?.name}?</Heading>
         <Content>
+          <div className="afm-modal-stack">
           {deleteError && (
             <Alert status="danger">
               <Content>{deleteError}</Content>
@@ -467,6 +468,7 @@ export function App() {
           ) : (
             <Text>This removes {pendingDelete?.name} from the triangle.</Text>
           )}
+          </div>
         </Content>
         <ActionGroup>
           <Button
@@ -493,6 +495,7 @@ export function App() {
       <Modal controller={adminController} isDismissable showCloseButton>
         <Heading>Admin settings</Heading>
         <Content>
+          <div className="afm-modal-stack">
           {adminError && (
             <Alert status="danger">
               <Content>{adminError}</Content>
@@ -520,6 +523,7 @@ export function App() {
               immediately.
             </FieldDescription>
           </TextField>
+          </div>
         </Content>
         <ActionGroup>
           <Button

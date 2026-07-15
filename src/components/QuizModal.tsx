@@ -259,7 +259,7 @@ export function QuizModal({
       <Heading>✨ The AI quiz</Heading>
       <Content>
         {phase === "intro" && (
-          <>
+          <div className="afm-modal-stack">
             <Text>
               Answer 15 questions and the AI figures out how mausig 🍷, atzig
               🚬, and fotzig 🫦 you are. The first 10 questions are generated
@@ -288,7 +288,7 @@ export function QuizModal({
                 {stored ? "Start over" : "Start quiz"}
               </Button>
             </div>
-          </>
+          </div>
         )}
 
         {phase === "loading" && (
@@ -306,7 +306,7 @@ export function QuizModal({
         )}
 
         {phase === "question" && current && (
-          <>
+          <div className="afm-modal-stack">
             <ProgressBar value={chosen.length} minValue={0} maxValue={total}>
               <Label>
                 Question {chosen.length + 1} of {total}
@@ -326,11 +326,11 @@ export function QuizModal({
                 </Button>
               ))}
             </div>
-          </>
+          </div>
         )}
 
         {phase === "result" && scores && (
-          <>
+          <div className="afm-modal-stack">
             <Heading size="s">Your result</Heading>
             <Text className="afm-quiz__result">
               {formatPercentages(scores)}
@@ -369,11 +369,11 @@ export function QuizModal({
                 Don't save
               </Button>
             </div>
-          </>
+          </div>
         )}
 
         {phase === "error" && (
-          <>
+          <div className="afm-modal-stack">
             {rateLimited ? (
               <Alert status="warning">
                 <Heading>Whoa, too fast</Heading>
@@ -392,7 +392,7 @@ export function QuizModal({
             <Button variant="soft" color="secondary" onPress={retry}>
               Try again
             </Button>
-          </>
+          </div>
         )}
       </Content>
     </Modal>
