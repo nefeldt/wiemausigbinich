@@ -13,7 +13,8 @@ See [REQUIREMENTS.md](./REQUIREMENTS.md) for requirements and the implementation
 | | |
 | --- | --- |
 | ![App overview](docs/screenshots/app.png) The app (mStudio dark theme) | ![PDF export](docs/screenshots/pdf-export.png) "Print triangle" PDF export |
-| ![Quiz result popup](docs/screenshots/quiz-result.png) Quiz result popup with save prompt | ![Quiz resume](docs/screenshots/quiz-resume.png) Resuming an aborted quiz |
+| ![Quiz question](docs/screenshots/quiz-question.png) AI quiz question | ![Quiz resume](docs/screenshots/quiz-resume.png) Resuming an aborted quiz |
+| ![Quiz result popup](docs/screenshots/quiz-result.png) Quiz result popup with save prompt | |
 | ![Rate limit banner](docs/screenshots/quiz-ratelimit.png) Friendly rate-limit banner (429) | ![Protected delete](docs/screenshots/delete-protected.png) Delete dialog once protection is enabled |
 
 ## Stack
