@@ -111,17 +111,17 @@ app.post("/api/people", async (req, res, next) => {
     if (!trimmedName || trimmedName.length > 40) {
       return res
         .status(400)
-        .json({ error: "A name is required (40 characters max)." });
+        .json({ error: "Ein Name ist erforderlich (max. 40 Zeichen)." });
     }
     if (scores.m === null || scores.a === null || scores.f === null) {
       return res
         .status(400)
-        .json({ error: "m, a, and f must be numbers between 0 and 10." });
+        .json({ error: "m, a und f müssen Zahlen zwischen 0 und 10 sein." });
     }
     if (scores.m + scores.a + scores.f <= 0) {
       return res
         .status(400)
-        .json({ error: "At least one score must be greater than 0." });
+        .json({ error: "Mindestens ein Wert muss größer als 0 sein." });
     }
 
     const person = {
@@ -151,13 +151,13 @@ app.get("/api/config", async (req, res, next) => {
 app.put("/api/admin/delete-password", async (req, res, next) => {
   try {
     if (!adminOk(req)) {
-      return res.status(401).json({ error: "Wrong admin password." });
+      return res.status(401).json({ error: "Falsches Admin-Passwort." });
     }
     const password = req.body?.password;
     if (typeof password !== "string" || password.length > 100) {
       return res
         .status(400)
-        .json({ error: "password must be a string (empty to disable protection)." });
+        .json({ error: "password muss ein String sein (leer = Schutz deaktivieren)." });
     }
     const settings = await readSettings();
     settings.deletePassword = password;
@@ -171,7 +171,7 @@ app.put("/api/admin/delete-password", async (req, res, next) => {
 app.delete("/api/people/:id", async (req, res, next) => {
   try {
     if (!(await deleteAllowed(req))) {
-      return res.status(401).json({ error: "Wrong password." });
+      return res.status(401).json({ error: "Falsches Passwort." });
     }
     const removed = await mutatePeople((people) => {
       const index = people.findIndex((p) => p.id === req.params.id);
@@ -179,7 +179,7 @@ app.delete("/api/people/:id", async (req, res, next) => {
       people.splice(index, 1);
       return true;
     });
-    if (!removed) return res.status(404).json({ error: "Person not found." });
+    if (!removed) return res.status(404).json({ error: "Person nicht gefunden." });
     res.status(204).end();
   } catch (err) {
     next(err);
@@ -191,7 +191,7 @@ app.use("/api/quiz", quizRouter);
 app.use((err, req, res, next) => {
   if (res.headersSent) return next(err);
   console.error(err);
-  res.status(err.status ?? 500).json({ error: err.message ?? "Internal server error." });
+  res.status(err.status ?? 500).json({ error: err.message ?? "Interner Serverfehler." });
 });
 
 app.use(express.static(DIST_DIR));

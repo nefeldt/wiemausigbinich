@@ -134,7 +134,9 @@ export function QuizModal({
 
   const fail = (err: unknown) => {
     setRateLimited(err instanceof ApiError && err.status === 429);
-    setError(err instanceof Error ? err.message : "The quiz failed to load.");
+    setError(
+      err instanceof Error ? err.message : "Das Quiz konnte nicht geladen werden.",
+    );
     setPhase("error");
   };
 
@@ -232,7 +234,7 @@ export function QuizModal({
   const save = async (result: Scores) => {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      setSaveError("Please enter a name.");
+      setSaveError("Bitte gib einen Namen ein.");
       return;
     }
     setSaveError(null);
@@ -242,7 +244,7 @@ export function QuizModal({
       clearStored();
       close();
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Saving failed.");
+      setSaveError(err instanceof Error ? err.message : "Speichern fehlgeschlagen.");
     } finally {
       setSaving(false);
     }
@@ -256,28 +258,28 @@ export function QuizModal({
       isDismissable
       showCloseButton
     >
-      <Heading>✨ The AI quiz</Heading>
+      <Heading>✨ Das KI-Quiz</Heading>
       <Content>
         {phase === "intro" && (
           <div className="afm-modal-stack afm-quiz__phase">
             <Text>
-              Answer 15 questions and the AI figures out how mausig 🍷, atzig
-              🚬, and fotzig 🫦 you are. The first 10 questions are generated
-              up front — the last {ADAPTIVE_COUNT} are generated live, based on
-              your answers.
+              Beantworte 15 Fragen und die KI findet heraus, wie mausig 🍷,
+              atzig 🚬 und fotzig 🫦 du bist. Die ersten 10 Fragen werden
+              vorab generiert — die letzten {ADAPTIVE_COUNT} entstehen live
+              aus deinen Antworten.
             </Text>
             {stored && (
               <Alert status="info">
                 <Content>
-                  You have an unfinished quiz ({stored.chosen.length} answered).
-                  Resume it or start over.
+                  Du hast ein unfertiges Quiz ({stored.chosen.length}{" "}
+                  beantwortet). Mach weiter oder starte neu.
                 </Content>
               </Alert>
             )}
             <div className="afm-quiz__actions">
               {stored && (
                 <Button color="primary" onPress={resume}>
-                  Resume quiz
+                  Quiz fortsetzen
                 </Button>
               )}
               <Button
@@ -285,7 +287,7 @@ export function QuizModal({
                 variant={stored ? "soft" : "solid"}
                 onPress={() => void start()}
               >
-                {stored ? "Start over" : "Start quiz"}
+                {stored ? "Neu starten" : "Quiz starten"}
               </Button>
             </div>
           </div>
@@ -294,14 +296,14 @@ export function QuizModal({
         {phase === "loading" && (
           <div className="afm-quiz__loading">
             <LoadingSpinner size="l" />
-            <Text>Generating your questions…</Text>
+            <Text>Deine Fragen werden generiert…</Text>
           </div>
         )}
 
         {phase === "adaptive" && (
           <div className="afm-quiz__loading">
             <LoadingSpinner size="l" />
-            <Text>Reading your answers and crafting a follow-up…</Text>
+            <Text>Die KI liest deine Antworten und denkt sich eine Folgefrage aus…</Text>
           </div>
         )}
 
@@ -309,7 +311,7 @@ export function QuizModal({
           <div className="afm-modal-stack afm-quiz__phase">
             <ProgressBar value={chosen.length} minValue={0} maxValue={total}>
               <Label>
-                Question {chosen.length + 1} of {total}
+                Frage {chosen.length + 1} von {total}
               </Label>
             </ProgressBar>
             <Heading size="s">{current.text}</Heading>
@@ -331,11 +333,11 @@ export function QuizModal({
 
         {phase === "result" && scores && (
           <div className="afm-modal-stack afm-quiz__phase">
-            <Heading size="s">Your result</Heading>
+            <Heading size="s">Dein Ergebnis</Heading>
             <Text className="afm-quiz__result">
               {formatPercentages(scores)}
             </Text>
-            <Text>Save this result to the triangle?</Text>
+            <Text>Soll das Ergebnis so ins Dreieck gespeichert werden?</Text>
             {saveError && (
               <Alert status="danger">
                 <Content>{saveError}</Content>
@@ -355,7 +357,7 @@ export function QuizModal({
                 onPress={() => void save(scores)}
                 isPending={saving}
               >
-                Save to triangle
+                Ins Dreieck speichern
               </Button>
               <Button
                 variant="soft"
@@ -366,7 +368,7 @@ export function QuizModal({
                   close();
                 }}
               >
-                Don't save
+                Nicht speichern
               </Button>
             </div>
           </div>
@@ -376,21 +378,21 @@ export function QuizModal({
           <div className="afm-modal-stack afm-quiz__phase">
             {rateLimited ? (
               <Alert status="warning">
-                <Heading>Whoa, too fast</Heading>
+                <Heading>Langsam, langsam</Heading>
                 <Content>
-                  The AI only handles 30 requests per minute and is catching
-                  its breath. Wait a few seconds, then try again — your
-                  progress is kept.
+                  Die KI schafft nur 30 Anfragen pro Minute und holt gerade
+                  Luft. Warte ein paar Sekunden und versuch es dann nochmal —
+                  dein Fortschritt bleibt erhalten.
                 </Content>
               </Alert>
             ) : (
               <Alert status="danger">
-                <Heading>The quiz hit a snag</Heading>
+                <Heading>Das Quiz hat gehakt</Heading>
                 <Content>{error}</Content>
               </Alert>
             )}
             <Button variant="soft" color="secondary" onPress={retry}>
-              Try again
+              Nochmal versuchen
             </Button>
           </div>
         )}

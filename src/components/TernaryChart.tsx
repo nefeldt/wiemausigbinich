@@ -40,7 +40,7 @@ export function TernaryChart({ people, preview }: TernaryChartProps) {
       className="afm-chart"
       viewBox="0 0 520 500"
       role="img"
-      aria-label="Triangle with the axes mausig, atzig, and fotzig"
+      aria-label="Dreieck mit den Achsen mausig, atzig und fotzig"
     >
       <path d={trianglePath} className="afm-chart__triangle" />
       {GRID_LINES.map((line, i) => (
@@ -84,14 +84,14 @@ export function TernaryChart({ people, preview }: TernaryChartProps) {
 
       {preview && (
         <g className="afm-chart__preview">
-          <title>{`Preview: ${formatPercentages(preview.scores)}`}</title>
+          <title>{`Vorschau: ${formatPercentages(preview.scores)}`}</title>
           {(() => {
             const point = scoresToPoint(preview.scores);
             return (
               <>
                 <circle cx={point.x} cy={point.y} r={9} className="afm-chart__preview-dot" />
                 <text x={point.x} y={point.y - 15} className="afm-chart__name afm-chart__name--preview">
-                  {preview.name || "You?"}
+                  {preview.name || "Du?"}
                 </text>
               </>
             );

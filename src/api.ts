@@ -17,7 +17,7 @@ export class ApiError extends Error {
 
 async function handle<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    let message = `Request failed with status ${response.status}`;
+    let message = `Anfrage fehlgeschlagen (Status ${response.status})`;
     try {
       const body = await response.json();
       if (body?.error) message = body.error;

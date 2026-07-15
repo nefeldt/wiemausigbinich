@@ -97,13 +97,13 @@ export async function exportTrianglePdf(people: Person[]): Promise<void> {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
   doc.setTextColor("#5e6c7a");
-  doc.text("The holy team triangle", centerX, 32, { align: "center" });
+  doc.text("Das heilige Team-Dreieck", centerX, 32, { align: "center" });
 
   const imageH = 152;
   const imageW = (CHART_W / CHART_H) * imageH;
   doc.addImage(image, "PNG", centerX - imageW / 2, 40, imageW, imageH);
 
-  const date = new Date().toLocaleDateString("en-GB", {
+  const date = new Date().toLocaleDateString("de-DE", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -111,11 +111,11 @@ export async function exportTrianglePdf(people: Person[]): Promise<void> {
   doc.setFontSize(9);
   doc.setTextColor("#8fa1b4");
   doc.text(
-    `${people.length} ${people.length === 1 ? "person" : "people"} · ${date}`,
+    `${people.length} ${people.length === 1 ? "Person" : "Personen"} · ${date}`,
     centerX,
     pageH - 10,
     { align: "center" },
   );
 
-  doc.save("team-triangle.pdf");
+  doc.save("team-dreieck.pdf");
 }

@@ -83,7 +83,9 @@ export function App() {
     try {
       setPeople(await getPeople());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load people.");
+      setError(
+        err instanceof Error ? err.message : "Personen konnten nicht geladen werden.",
+      );
     }
   }, []);
 
@@ -104,7 +106,7 @@ export function App() {
   const requireName = (): string | null => {
     const trimmed = name.trim();
     if (!trimmed) {
-      setError("Please enter your name first.");
+      setError("Bitte gib zuerst deinen Namen ein.");
       return null;
     }
     return trimmed;
@@ -120,9 +122,9 @@ export function App() {
       await addPerson(trimmedName, scores);
       await refresh();
       setName("");
-      setNotice(`Added ${trimmedName}! ${formatPercentages(scores)}`);
+      setNotice(`${trimmedName} hinzugefügt! ${formatPercentages(scores)}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Saving failed.");
+      setError(err instanceof Error ? err.message : "Speichern fehlgeschlagen.");
     } finally {
       setSaving(false);
     }
@@ -137,7 +139,7 @@ export function App() {
     const parsed = parseResultInput(importUrl);
     if (!parsed) {
       setError(
-        "Could not read m/a/f from that input. Expected something like " +
+        "Aus der Eingabe ließen sich m/a/f nicht lesen. Erwartet wird etwas wie " +
           "https://atzigfotzigmausig.de/result?m=4&a=2.8&f=6.2",
       );
       return;
@@ -150,10 +152,10 @@ export function App() {
       setImportUrl("");
       setName("");
       setNotice(
-        `Added ${trimmedName} from atzigfotzigmausig.de! ${formatPercentages(parsed)}`,
+        `${trimmedName} von atzigfotzigmausig.de importiert! ${formatPercentages(parsed)}`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed.");
+      setError(err instanceof Error ? err.message : "Import fehlgeschlagen.");
     } finally {
       setImporting(false);
     }
@@ -175,10 +177,10 @@ export function App() {
     try {
       await deletePerson(pendingDelete.id, password);
       await refresh();
-      setNotice(`Removed ${pendingDelete.name} from the triangle.`);
+      setNotice(`${pendingDelete.name} wurde aus dem Dreieck entfernt.`);
       deleteController.close();
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : "Deleting failed.");
+      setDeleteError(err instanceof Error ? err.message : "Löschen fehlgeschlagen.");
     } finally {
       setDeleting(false);
     }
@@ -194,11 +196,11 @@ export function App() {
       adminController.close();
       setNotice(
         config.deleteRequiresPassword
-          ? "Delete protection is now enabled."
-          : "Delete protection is now disabled.",
+          ? "Löschschutz ist jetzt aktiviert."
+          : "Löschschutz ist jetzt deaktiviert.",
       );
     } catch (err) {
-      setAdminError(err instanceof Error ? err.message : "Saving failed.");
+      setAdminError(err instanceof Error ? err.message : "Speichern fehlgeschlagen.");
     } finally {
       setAdminSaving(false);
     }
@@ -211,7 +213,7 @@ export function App() {
     try {
       await exportTrianglePdf(people);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "PDF export failed.");
+      setError(err instanceof Error ? err.message : "PDF-Export fehlgeschlagen.");
     } finally {
       setExporting(false);
     }
@@ -227,7 +229,7 @@ export function App() {
           <Button
             variant="plain"
             color="secondary"
-            aria-label="Admin settings"
+            aria-label="Admin-Einstellungen"
             onPress={() => {
               setAdminError(null);
               adminController.open();
@@ -239,7 +241,7 @@ export function App() {
           </Button>
         </div>
         <Text>
-          where does your team stand? Add yourself or import your result from{" "}
+          Wo steht dein Team? Trag dich ein oder importiere dein Ergebnis von{" "}
           <Link href="https://atzigfotzigmausig.de" target="_blank">
             atzigfotzigmausig.de
           </Link>
@@ -249,13 +251,13 @@ export function App() {
 
       {error && (
         <Alert status="danger">
-          <Heading>That didn't work</Heading>
+          <Heading>Das hat nicht geklappt</Heading>
           <Content>{error}</Content>
         </Alert>
       )}
       {notice && !error && (
         <Alert status="success">
-          <Heading>Done</Heading>
+          <Heading>Erledigt</Heading>
           <Content>{notice}</Content>
         </Alert>
       )}
@@ -280,7 +282,7 @@ export function App() {
                 <Icon>
                   <FontAwesomeIcon icon={faPrint} />
                 </Icon>
-                Print triangle (PDF)
+                Dreieck drucken (PDF)
               </Button>
             </div>
             <TernaryChart people={people} preview={preview} />
@@ -290,7 +292,7 @@ export function App() {
         <div className="afm-sidebar">
           <LayoutCard>
             <Section>
-              <Heading>Add yourself</Heading>
+              <Heading>Trag dich ein</Heading>
 
               <Button
                 color="accent"
@@ -304,7 +306,7 @@ export function App() {
                 <Icon>
                   <FontAwesomeIcon icon={faWandMagicSparkles} />
                 </Icon>
-                Take the AI quiz
+                KI-Quiz starten
               </Button>
 
               <Separator />
@@ -323,10 +325,10 @@ export function App() {
                 onChange={setImportUrl}
                 placeholder="https://atzigfotzigmausig.de/result?m=4&a=2.8&f=6.2"
               >
-                <Label>Import a result URL</Label>
+                <Label>Ergebnis-URL importieren</Label>
                 <FieldDescription>
-                  Paste your atzigfotzigmausig.de result link — it goes straight
-                  into the triangle.
+                  Füg deinen atzigfotzigmausig.de-Ergebnislink ein — er landet
+                  direkt im Dreieck.
                 </FieldDescription>
               </TextField>
               <Button
@@ -339,7 +341,7 @@ export function App() {
                 <Icon>
                   <FontAwesomeIcon icon={faFileImport} />
                 </Icon>
-                Import &amp; add
+                Importieren &amp; eintragen
               </Button>
 
               <Separator />
@@ -384,16 +386,16 @@ export function App() {
                 <Icon>
                   <FontAwesomeIcon icon={faPlus} />
                 </Icon>
-                Add to triangle
+                Zum Dreieck hinzufügen
               </Button>
             </Section>
           </LayoutCard>
 
           <LayoutCard>
             <Section>
-              <Heading>People ({people.length})</Heading>
+              <Heading>Personen ({people.length})</Heading>
               {people.length === 0 && (
-                <Text>Nobody here yet — be the first!</Text>
+                <Text>Noch niemand da — sei die erste Person!</Text>
               )}
               <ul className="afm-people">
                 {people.map((person) => (
@@ -411,7 +413,7 @@ export function App() {
                     <Button
                       variant="plain"
                       color="danger"
-                      aria-label={`Delete ${person.name}`}
+                      aria-label={`${person.name} löschen`}
                       onPress={() => openDeleteDialog(person)}
                     >
                       <Icon>
@@ -434,18 +436,18 @@ export function App() {
           await refresh();
           setScores(result);
           setName("");
-          setNotice(`Added ${quizName}! ${formatPercentages(result)}`);
+          setNotice(`${quizName} hinzugefügt! ${formatPercentages(result)}`);
         }}
         onDiscard={(result) => {
           setScores(result);
           setNotice(
-            `Quiz result applied to the sliders (not saved): ${formatPercentages(result)}`,
+            `Quiz-Ergebnis in die Regler übernommen (nicht gespeichert): ${formatPercentages(result)}`,
           );
         }}
       />
 
       <Modal controller={deleteController} isDismissable showCloseButton>
-        <Heading>Delete {pendingDelete?.name}?</Heading>
+        <Heading>{pendingDelete?.name} löschen?</Heading>
         <Content>
           <div className="afm-modal-stack">
           {deleteError && (
@@ -460,13 +462,13 @@ export function App() {
               onChange={setPassword}
               isRequired
             >
-              <Label>Password</Label>
+              <Label>Passwort</Label>
               <FieldDescription>
-                Removing someone from the triangle requires the team password.
+                Zum Entfernen aus dem Dreieck ist das Team-Passwort nötig.
               </FieldDescription>
             </TextField>
           ) : (
-            <Text>This removes {pendingDelete?.name} from the triangle.</Text>
+            <Text>Das entfernt {pendingDelete?.name} aus dem Dreieck.</Text>
           )}
           </div>
         </Content>
@@ -476,7 +478,7 @@ export function App() {
             color="secondary"
             onPress={() => deleteController.close()}
           >
-            Cancel
+            Abbrechen
           </Button>
           <Button
             color="danger"
@@ -487,13 +489,13 @@ export function App() {
             <Icon>
               <FontAwesomeIcon icon={faTrashCan} />
             </Icon>
-            Delete
+            Löschen
           </Button>
         </ActionGroup>
       </Modal>
 
       <Modal controller={adminController} isDismissable showCloseButton>
-        <Heading>Admin settings</Heading>
+        <Heading>Admin-Einstellungen</Heading>
         <Content>
           <div className="afm-modal-stack">
           {adminError && (
@@ -506,9 +508,9 @@ export function App() {
             value={adminPassword}
             onChange={setAdminPassword}
           >
-            <Label>Admin password</Label>
+            <Label>Admin-Passwort</Label>
             <FieldDescription>
-              The APP_PASSWORD configured through the deploy pipeline.
+              Das APP_PASSWORD aus der Deploy-Pipeline.
             </FieldDescription>
           </TextField>
           <TextField
@@ -516,11 +518,11 @@ export function App() {
             value={newDeletePassword}
             onChange={setNewDeletePassword}
           >
-            <Label optional={false}>Delete password</Label>
+            <Label optional={false}>Lösch-Passwort</Label>
             <FieldDescription>
-              People can only be deleted with this password. Leave empty to
-              allow deleting without a password (default). Takes effect
-              immediately.
+              Personen können nur mit diesem Passwort gelöscht werden. Leer
+              lassen, um das Löschen ohne Passwort zu erlauben (Standard).
+              Wirkt sofort.
             </FieldDescription>
           </TextField>
           </div>
@@ -531,14 +533,14 @@ export function App() {
             color="secondary"
             onPress={() => adminController.close()}
           >
-            Cancel
+            Abbrechen
           </Button>
           <Button
             color="primary"
             onPress={() => void handleAdminSave()}
             isPending={adminSaving}
           >
-            Save
+            Speichern
           </Button>
         </ActionGroup>
       </Modal>
