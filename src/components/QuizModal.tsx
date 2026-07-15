@@ -259,7 +259,7 @@ export function QuizModal({
       <Heading>✨ The AI quiz</Heading>
       <Content>
         {phase === "intro" && (
-          <div className="afm-modal-stack">
+          <div className="afm-modal-stack afm-quiz__phase">
             <Text>
               Answer 15 questions and the AI figures out how mausig 🍷, atzig
               🚬, and fotzig 🫦 you are. The first 10 questions are generated
@@ -306,7 +306,7 @@ export function QuizModal({
         )}
 
         {phase === "question" && current && (
-          <div className="afm-modal-stack">
+          <div className="afm-modal-stack afm-quiz__phase">
             <ProgressBar value={chosen.length} minValue={0} maxValue={total}>
               <Label>
                 Question {chosen.length + 1} of {total}
@@ -330,7 +330,7 @@ export function QuizModal({
         )}
 
         {phase === "result" && scores && (
-          <div className="afm-modal-stack">
+          <div className="afm-modal-stack afm-quiz__phase">
             <Heading size="s">Your result</Heading>
             <Text className="afm-quiz__result">
               {formatPercentages(scores)}
@@ -373,7 +373,7 @@ export function QuizModal({
         )}
 
         {phase === "error" && (
-          <div className="afm-modal-stack">
+          <div className="afm-modal-stack afm-quiz__phase">
             {rateLimited ? (
               <Alert status="warning">
                 <Heading>Whoa, too fast</Heading>
