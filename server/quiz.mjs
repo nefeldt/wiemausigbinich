@@ -4,7 +4,7 @@ const LLM_BASE_URL = (process.env.LLM_BASE_URL ?? "").replace(/\/$/, "");
 const LLM_SECRET = process.env.LLM_SECRET ?? "";
 const LLM_MODEL = process.env.LLM_MODEL || "Qwen3.6-35B-A3B-FP8";
 const LLM_FALLBACK_MODEL = process.env.LLM_FALLBACK_MODEL || "Mistral-Medium-3.5-128B";
-const LLM_TIMEOUT_MS = 90_000;
+const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS ?? 120_000);
 
 const BATCH_SIZE = 10;
 

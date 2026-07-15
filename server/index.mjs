@@ -202,6 +202,16 @@ app.use((req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`AFM triangle listening on http://localhost:${PORT} (data: ${DATA_FILE})`);
 });
+
+// As PID 1 in the container, Node gets no default signal handlers — without
+// this, a stop request is ignored until the platform SIGKILLs (exit code 137)
+for (const signal of ["SIGTERM", "SIGINT"]) {
+  process.on(signal, () => {
+    console.log(`Received ${signal}, shutting down`);
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 5000).unref();
+  });
+}
