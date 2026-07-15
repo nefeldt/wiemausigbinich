@@ -8,6 +8,14 @@ triangle as a pretty A4 PDF. The UI uses the mStudio dark theme via Flow design 
 
 See [REQUIREMENTS.md](./REQUIREMENTS.md) for requirements and the implementation plan.
 
+## Screenshots
+
+| | |
+| --- | --- |
+| ![App overview](docs/screenshots/app.png) The app (mStudio dark theme) | ![PDF export](docs/screenshots/pdf-export.png) "Print triangle" PDF export |
+| ![Quiz result popup](docs/screenshots/quiz-result.png) Quiz result popup with save prompt | ![Quiz resume](docs/screenshots/quiz-resume.png) Resuming an aborted quiz |
+| ![Rate limit banner](docs/screenshots/quiz-ratelimit.png) Friendly rate-limit banner (429) | ![Protected delete](docs/screenshots/delete-protected.png) Delete dialog once protection is enabled |
+
 ## Stack
 
 - React 19 + Vite + TypeScript, UI components from
