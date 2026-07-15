@@ -190,31 +190,72 @@ function formatHistory(history) {
     .join("\n");
 }
 
+async function generateBatch() {
+  // The random seed keeps any gateway-side prompt cache from serving
+  // every player the exact same questions
+  const content = await callLlm([
+    { role: "system", content: SYSTEM_PROMPT },
+    {
+      role: "user",
+      content:
+        `Generate ${BATCH_SIZE} varied quiz questions. ` +
+        `Variation seed: ${Math.random().toString(36).slice(2)} (ignore, just be creative). ` +
+        `Reply with JSON in this shape: {"questions": [${QUESTION_JSON_SHAPE}, ...]}`,
+    },
+  ]);
+  const parsed = extractJson(content);
+  const questions = (Array.isArray(parsed?.questions) ? parsed.questions : [])
+    .map(sanitizeQuestion)
+    .filter(Boolean)
+    .slice(0, BATCH_SIZE);
+  if (questions.length === 0) {
+    const err = new Error("LLM returned no usable questions.");
+    err.status = 502;
+    throw err;
+  }
+  return questions;
+}
+
+// The gateway can be slow under load or on cold starts, so ready-made
+// batches are kept in memory and refilled in the background — quiz starts
+// then respond instantly
+const CACHE_TARGET = 2;
+const batchCache = [];
+let refilling = false;
+
+async function refillBatchCache() {
+  if (refilling || !LLM_BASE_URL || !LLM_SECRET) return;
+  refilling = true;
+  try {
+    while (batchCache.length < CACHE_TARGET) {
+      batchCache.push(await generateBatch());
+      console.log(`Quiz batch cache refilled (${batchCache.length}/${CACHE_TARGET})`);
+    }
+  } catch (err) {
+    console.warn(`Quiz batch cache refill failed: ${err.message}`);
+  } finally {
+    refilling = false;
+  }
+}
+
+// Warm the cache shortly after boot
+setTimeout(() => void refillBatchCache(), 3_000).unref();
+
 export const quizRouter = express.Router();
 
-// All batch questions in a single LLM request
+// All batch questions in a single LLM request (served from the pre-generated
+// cache when available)
 quizRouter.post("/questions", async (req, res, next) => {
   try {
-    const content = await callLlm([
-      { role: "system", content: SYSTEM_PROMPT },
-      {
-        role: "user",
-        content:
-          `Generate ${BATCH_SIZE} varied quiz questions. ` +
-          `Reply with JSON in this shape: {"questions": [${QUESTION_JSON_SHAPE}, ...]}`,
-      },
-    ]);
-    const parsed = extractJson(content);
-    const questions = (Array.isArray(parsed?.questions) ? parsed.questions : [])
-      .map(sanitizeQuestion)
-      .filter(Boolean)
-      .slice(0, BATCH_SIZE);
-    if (questions.length === 0) {
-      const err = new Error("LLM returned no usable questions.");
-      err.status = 502;
-      throw err;
+    const cached = batchCache.shift();
+    if (cached) {
+      res.json({ questions: cached });
+      void refillBatchCache();
+      return;
     }
+    const questions = await generateBatch();
     res.json({ questions });
+    void refillBatchCache();
   } catch (err) {
     next(err);
   }
