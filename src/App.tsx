@@ -1,8 +1,10 @@
 import {
   faFileImport,
+  faGear,
   faPlus,
   faPrint,
   faTrashCan,
+  faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -23,9 +25,17 @@ import {
   Slider,
   Text,
   TextField,
+  useOverlayController,
 } from "@mittwald/flow-react-components";
 import { useCallback, useEffect, useState } from "react";
-import { addPerson, deletePerson, getPeople } from "./api";
+import {
+  addPerson,
+  deletePerson,
+  getConfig,
+  getPeople,
+  setDeletePassword,
+} from "./api";
+import { QuizModal } from "./components/QuizModal";
 import { TernaryChart } from "./components/TernaryChart";
 import { exportTrianglePdf } from "./pdf";
 import { formatPercentages, parseResultInput, personColor } from "./ternary";
@@ -48,6 +58,26 @@ export function App() {
   const [password, setPassword] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteRequiresPassword, setDeleteRequiresPassword] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [newDeletePassword, setNewDeletePassword] = useState("");
+  const [adminSaving, setAdminSaving] = useState(false);
+  const [adminError, setAdminError] = useState<string | null>(null);
+
+  const quizController = useOverlayController("Modal");
+  const deleteController = useOverlayController("Modal", {
+    onClose: () => {
+      setPendingDelete(null);
+      setPassword("");
+      setDeleteError(null);
+    },
+  });
+  const adminController = useOverlayController("Modal", {
+    onClose: () => {
+      setAdminPassword("");
+      setAdminError(null);
+    },
+  });
 
   const refresh = useCallback(async () => {
     try {
@@ -59,6 +89,11 @@ export function App() {
 
   useEffect(() => {
     void refresh().finally(() => setLoading(false));
+    getConfig()
+      .then((config) => setDeleteRequiresPassword(config.deleteRequiresPassword))
+      .catch(() => {
+        // keep the default; deleting will still fail server-side if protected
+      });
   }, [refresh]);
 
   const setScore = (key: keyof Scores) => (value: number | number[]) => {
@@ -130,12 +165,7 @@ export function App() {
     setDeleteError(null);
     setPassword("");
     setPendingDelete(person);
-  };
-
-  const closeDeleteDialog = () => {
-    setPendingDelete(null);
-    setPassword("");
-    setDeleteError(null);
+    deleteController.open();
   };
 
   const handleDelete = async () => {
@@ -146,11 +176,31 @@ export function App() {
       await deletePerson(pendingDelete.id, password);
       await refresh();
       setNotice(`Removed ${pendingDelete.name} from the triangle.`);
-      closeDeleteDialog();
+      deleteController.close();
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Deleting failed.");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleAdminSave = async () => {
+    setAdminError(null);
+    setAdminSaving(true);
+    try {
+      const config = await setDeletePassword(adminPassword, newDeletePassword);
+      setDeleteRequiresPassword(config.deleteRequiresPassword);
+      setNewDeletePassword("");
+      adminController.close();
+      setNotice(
+        config.deleteRequiresPassword
+          ? "Delete protection is now enabled."
+          : "Delete protection is now disabled.",
+      );
+    } catch (err) {
+      setAdminError(err instanceof Error ? err.message : "Saving failed.");
+    } finally {
+      setAdminSaving(false);
     }
   };
 
@@ -172,7 +222,22 @@ export function App() {
   return (
     <div className="afm-page">
       <header className="afm-header">
-        <Heading size="xl">Atzig - Fotzig - Mausig</Heading>
+        <div className="afm-header__row">
+          <Heading size="xl">Atzig - Fotzig - Mausig</Heading>
+          <Button
+            variant="plain"
+            color="secondary"
+            aria-label="Admin settings"
+            onPress={() => {
+              setAdminError(null);
+              adminController.open();
+            }}
+          >
+            <Icon>
+              <FontAwesomeIcon icon={faGear} />
+            </Icon>
+          </Button>
+        </div>
         <Text>
           where does your team stand? Add yourself or import your result from{" "}
           <Link href="https://atzigfotzigmausig.de" target="_blank">
@@ -226,6 +291,23 @@ export function App() {
           <LayoutCard>
             <Section>
               <Heading>Add yourself</Heading>
+
+              <Button
+                color="accent"
+                variant="soft"
+                onPress={() => {
+                  setError(null);
+                  setNotice(null);
+                  quizController.open();
+                }}
+              >
+                <Icon>
+                  <FontAwesomeIcon icon={faWandMagicSparkles} />
+                </Icon>
+                Take the AI quiz
+              </Button>
+
+              <Separator />
 
               <TextField
                 value={name}
@@ -344,13 +426,25 @@ export function App() {
         </div>
       </div>
 
-      <Modal
-        isOpen={pendingDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) closeDeleteDialog();
+      <QuizModal
+        controller={quizController}
+        defaultName={name}
+        onSave={async (quizName, result) => {
+          await addPerson(quizName, result);
+          await refresh();
+          setScores(result);
+          setName("");
+          setNotice(`Added ${quizName}! ${formatPercentages(result)}`);
         }}
-        isDismissable
-      >
+        onDiscard={(result) => {
+          setScores(result);
+          setNotice(
+            `Quiz result applied to the sliders (not saved): ${formatPercentages(result)}`,
+          );
+        }}
+      />
+
+      <Modal controller={deleteController} isDismissable showCloseButton>
         <Heading>Delete {pendingDelete?.name}?</Heading>
         <Content>
           {deleteError && (
@@ -358,32 +452,89 @@ export function App() {
               <Content>{deleteError}</Content>
             </Alert>
           )}
-          <TextField
-            type="password"
-            value={password}
-            onChange={setPassword}
-            isRequired
-          >
-            <Label>Password</Label>
-            <FieldDescription>
-              Removing someone from the triangle requires the team password.
-            </FieldDescription>
-          </TextField>
+          {deleteRequiresPassword ? (
+            <TextField
+              type="password"
+              value={password}
+              onChange={setPassword}
+              isRequired
+            >
+              <Label>Password</Label>
+              <FieldDescription>
+                Removing someone from the triangle requires the team password.
+              </FieldDescription>
+            </TextField>
+          ) : (
+            <Text>This removes {pendingDelete?.name} from the triangle.</Text>
+          )}
         </Content>
         <ActionGroup>
-          <Button variant="soft" color="secondary" onPress={closeDeleteDialog}>
+          <Button
+            variant="soft"
+            color="secondary"
+            onPress={() => deleteController.close()}
+          >
             Cancel
           </Button>
           <Button
             color="danger"
             onPress={() => void handleDelete()}
             isPending={deleting}
-            isDisabled={!password}
+            isDisabled={deleteRequiresPassword && !password}
           >
             <Icon>
               <FontAwesomeIcon icon={faTrashCan} />
             </Icon>
             Delete
+          </Button>
+        </ActionGroup>
+      </Modal>
+
+      <Modal controller={adminController} isDismissable showCloseButton>
+        <Heading>Admin settings</Heading>
+        <Content>
+          {adminError && (
+            <Alert status="danger">
+              <Content>{adminError}</Content>
+            </Alert>
+          )}
+          <TextField
+            type="password"
+            value={adminPassword}
+            onChange={setAdminPassword}
+          >
+            <Label>Admin password</Label>
+            <FieldDescription>
+              The APP_PASSWORD configured through the deploy pipeline.
+            </FieldDescription>
+          </TextField>
+          <TextField
+            type="password"
+            value={newDeletePassword}
+            onChange={setNewDeletePassword}
+          >
+            <Label optional={false}>Delete password</Label>
+            <FieldDescription>
+              People can only be deleted with this password. Leave empty to
+              allow deleting without a password (default). Takes effect
+              immediately.
+            </FieldDescription>
+          </TextField>
+        </Content>
+        <ActionGroup>
+          <Button
+            variant="soft"
+            color="secondary"
+            onPress={() => adminController.close()}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="primary"
+            onPress={() => void handleAdminSave()}
+            isPending={adminSaving}
+          >
+            Save
           </Button>
         </ActionGroup>
       </Modal>

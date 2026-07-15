@@ -27,6 +27,17 @@ themselves, and all entries are stored server-side.
 6. **Print/PDF export**: a "Print triangle" button generates a pretty A4 landscape PDF
    containing only the triangle (title, chart with all people, date footer). The chart is
    rendered to a canvas client-side and embedded via jsPDF — no server round-trip.
+7. **AI quiz** (live in the web app): 15 questions determine your position in the
+   triangle. The first 10 questions come from a **single** LLM request at quiz start;
+   the last 5 are generated **one request each, based on the answers given so far**.
+   The result appears as a popup asking whether to save it to the triangle (with name),
+   or to only apply it to the form sliders. Aborted quizzes are cached in the browser
+   (localStorage, 24 h) and can be resumed. The LLM gateway allows 30 requests/minute —
+   a 429 is surfaced as a friendly rate-limit banner with a retry that keeps progress.
+8. **Runtime admin settings**: deleting people is unprotected by default. A gear icon
+   opens the admin dialog (authenticated with `APP_PASSWORD`), where a delete password
+   can be set/cleared while the app is running — persisted in `settings.json` on the
+   data volume, effective immediately.
 
 ### Non-functional
 
@@ -75,7 +86,14 @@ Browser ── React 19 + Vite + Flow ──► Express (Node 24)
 - GitHub secret `MITTWALD_API_TOKEN` — an mStudio API token ✅ (already set up)
 - GitHub secret `STACK_ID` — the container stack UUID ✅ (already set up).
   Can be looked up with the CLI: `mw stack list --project-id <p-XXXXXX>`
-- GitHub secret `APP_PASSWORD` — the team password required for deleting people
+- GitHub secret `APP_PASSWORD` — the **admin password** for the runtime settings dialog
+- GitHub secret `LLM_BASE_URL` — OpenAI-compatible gateway base URL (incl. `/v1`)
+- GitHub secret `LLM_SECRET` — bearer token for the gateway. **Server-side only**: the
+  browser only ever talks to `/api/quiz/*`; the token never reaches the client, and
+  upstream error bodies are logged server-side instead of being forwarded.
+- GitHub secret `LLM_MODEL` — primary model (default `Qwen3.6-35B-A3B-FP8`); on errors
+  or rate limits the server retries once with `Mistral-Medium-3.5-128B`
+  (`LLM_FALLBACK_MODEL` env to override)
 - Make the GHCR image **public** — or store GHCR registry credentials in mStudio
 - Connect a domain/ingress in mStudio to port `3000` of the container
 

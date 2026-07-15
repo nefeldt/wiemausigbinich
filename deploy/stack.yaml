@@ -7,6 +7,9 @@ services:
     envs:
       DATA_DIR: /data
       APP_PASSWORD: "{{ .Env.APP_PASSWORD }}"
+      LLM_BASE_URL: "{{ .Env.LLM_BASE_URL }}"
+      LLM_SECRET: "{{ .Env.LLM_SECRET }}"
+      LLM_MODEL: "{{ .Env.LLM_MODEL }}"
     volumes:
       - "data:/data"
 

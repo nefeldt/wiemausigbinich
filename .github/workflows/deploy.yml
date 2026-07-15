@@ -41,6 +41,9 @@ jobs:
         env:
           IMAGE_TAG: ${{ env.IMAGE }}:${{ github.sha }}
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_SECRET: ${{ secrets.LLM_SECRET }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
         with:
           api_token: ${{ secrets.MITTWALD_API_TOKEN }}
           stack_id: ${{ secrets.STACK_ID }}

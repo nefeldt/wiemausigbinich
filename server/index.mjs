@@ -3,20 +3,53 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
+import { quizRouter } from "./quiz.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR ?? path.join(__dirname, "..", "data");
 const DATA_FILE = path.join(DATA_DIR, "people.json");
 const DIST_DIR = path.join(__dirname, "..", "dist");
 const PORT = Number(process.env.PORT ?? 3000);
-// Set via the deploy pipeline (GitHub secret APP_PASSWORD); empty = no protection (local dev)
-const APP_PASSWORD = process.env.APP_PASSWORD ?? "";
+const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
+// Admin password from the deploy pipeline (GitHub secret APP_PASSWORD).
+// It guards the runtime admin settings — empty = admin endpoints are open (local dev).
+const ADMIN_PASSWORD = process.env.APP_PASSWORD ?? "";
 
-function passwordOk(req) {
-  if (!APP_PASSWORD) return true;
-  const given = Buffer.from(String(req.get("x-app-password") ?? ""));
-  const expected = Buffer.from(APP_PASSWORD);
-  return given.length === expected.length && timingSafeEqual(given, expected);
+const DEFAULT_SETTINGS = { deletePassword: "" };
+
+async function readSettings() {
+  try {
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(await fs.readFile(SETTINGS_FILE, "utf8")) };
+  } catch (err) {
+    if (err.code === "ENOENT") return { ...DEFAULT_SETTINGS };
+    throw err;
+  }
+}
+
+async function writeSettings(settings) {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  const tmp = `${SETTINGS_FILE}.tmp`;
+  await fs.writeFile(tmp, JSON.stringify(settings, null, 2));
+  await fs.rename(tmp, SETTINGS_FILE);
+}
+
+function timingSafeMatch(given, expected) {
+  const g = Buffer.from(String(given));
+  const e = Buffer.from(String(expected));
+  return g.length === e.length && timingSafeEqual(g, e);
+}
+
+function adminOk(req) {
+  if (!ADMIN_PASSWORD) return true;
+  return timingSafeMatch(req.get("x-admin-password") ?? "", ADMIN_PASSWORD);
+}
+
+// Deleting people is unprotected by default; a password can be set at runtime
+// through the admin settings
+async function deleteAllowed(req) {
+  const { deletePassword } = await readSettings();
+  if (!deletePassword) return true;
+  return timingSafeMatch(req.get("x-app-password") ?? "", deletePassword);
 }
 
 async function readPeople() {
@@ -104,9 +137,40 @@ app.post("/api/people", async (req, res, next) => {
   }
 });
 
+// Public app configuration (no secrets — only what the UI needs to know)
+app.get("/api/config", async (req, res, next) => {
+  try {
+    const settings = await readSettings();
+    res.json({ deleteRequiresPassword: Boolean(settings.deletePassword) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Admin: change the delete password while the app is running
+app.put("/api/admin/delete-password", async (req, res, next) => {
+  try {
+    if (!adminOk(req)) {
+      return res.status(401).json({ error: "Wrong admin password." });
+    }
+    const password = req.body?.password;
+    if (typeof password !== "string" || password.length > 100) {
+      return res
+        .status(400)
+        .json({ error: "password must be a string (empty to disable protection)." });
+    }
+    const settings = await readSettings();
+    settings.deletePassword = password;
+    await writeSettings(settings);
+    res.json({ deleteRequiresPassword: Boolean(password) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.delete("/api/people/:id", async (req, res, next) => {
   try {
-    if (!passwordOk(req)) {
+    if (!(await deleteAllowed(req))) {
       return res.status(401).json({ error: "Wrong password." });
     }
     const removed = await mutatePeople((people) => {
@@ -120,6 +184,14 @@ app.delete("/api/people/:id", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+app.use("/api/quiz", quizRouter);
+
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  console.error(err);
+  res.status(err.status ?? 500).json({ error: err.message ?? "Internal server error." });
 });
 
 app.use(express.static(DIST_DIR));
