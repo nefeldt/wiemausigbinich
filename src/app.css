@@ -1,0 +1,208 @@
+/* Page styling on top of Flow (all colors/fonts come from Flow design tokens,
+   so the app matches mStudio 1:1 — including dark mode via data-theme) */
+
+body {
+  margin: 0;
+  background: var(--color--gray--200, #f4f8fc);
+  color: var(--color--gray--900, #292f37);
+  font-family: Inter, sans-serif;
+}
+
+.afm-page {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.afm-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.afm-loading {
+  display: flex;
+  justify-content: center;
+  padding: 6rem 0;
+}
+
+.afm-columns[hidden] {
+  display: none;
+}
+
+.afm-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .afm-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.afm-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.afm-percentages {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ternary chart */
+
+.afm-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.afm-chart__triangle {
+  fill: var(--color--gray--100, #ffffff);
+  stroke: var(--color--gray--600, #8fa1b4);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.afm-chart__grid {
+  stroke: var(--color--gray--500, #b7c9db);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.afm-chart__corner {
+  font-size: 20px;
+  font-weight: 700;
+  text-anchor: middle;
+  fill: var(--color--gray--900, #292f37);
+}
+
+.afm-chart__dot {
+  stroke: var(--color--gray--100, #ffffff);
+  stroke-width: 2;
+}
+
+.afm-chart__name {
+  font-size: 14px;
+  font-weight: 600;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--color--gray--100, #ffffff);
+  stroke-width: 3px;
+}
+
+.afm-chart__preview-dot {
+  fill: none;
+  stroke: var(--color--hosting-blue--700, #3163d2);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+.afm-chart__name--preview {
+  fill: var(--color--hosting-blue--700, #3163d2);
+  opacity: 0.8;
+}
+
+.afm-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* People list */
+
+.afm-people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.afm-person {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color--gray--300, #e5eff8);
+}
+
+.afm-person:last-child {
+  border-bottom: none;
+}
+
+.afm-person__dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.afm-person__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Print: only the header and the full-width triangle, on white */
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .afm-sidebar,
+  .afm-print-button,
+  .afm-page > .flow--alert {
+    display: none !important;
+  }
+
+  .afm-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .afm-page {
+    padding: 0;
+  }
+
+  .afm-header :is(h1, h2, h3, span, p, a),
+  .afm-card-head :is(h1, h2, h3, span, p) {
+    color: #000000 !important;
+  }
+
+  .afm-chart {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .afm-chart__triangle {
+    fill: #ffffff;
+    stroke: #333333;
+  }
+
+  .afm-chart__grid {
+    stroke: #aaaaaa;
+  }
+
+  .afm-chart__corner {
+    fill: #000000;
+  }
+
+  .afm-chart__name {
+    stroke: #ffffff;
+  }
+
+  .afm-chart__preview-dot,
+  .afm-chart__name--preview {
+    display: none;
+  }
+}

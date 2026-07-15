@@ -1,0 +1,15 @@
+services:
+  app:
+    image: "{{ .Env.IMAGE_TAG }}"
+    description: "Atzig-Fotzig-Mausig triangle"
+    ports:
+      - "3000/tcp"
+    envs:
+      DATA_DIR: /data
+      APP_PASSWORD: "{{ .Env.APP_PASSWORD }}"
+    volumes:
+      - "data:/data"
+
+volumes:
+  data:
+    name: afm-data

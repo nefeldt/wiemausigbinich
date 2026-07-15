@@ -11,9 +11,13 @@
     "start": "node server/index.mjs"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^7.3.0",
+    "@fortawesome/free-solid-svg-icons": "^7.3.0",
+    "@fortawesome/react-fontawesome": "^3.4.0",
     "@mittwald/flow-react-components": "^0.2.0-alpha.906",
     "@mittwald/react-use-promise": "^4.2.2",
     "express": "^5.1.0",
+    "jspdf": "^4.2.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
